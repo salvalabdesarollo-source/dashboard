@@ -7,7 +7,7 @@ import SearchableSelect from "@/components/SearchableSelect";
 import { apiRequest, extractList } from "@/lib/api";
 import { getStoredAuth } from "@/lib/auth";
 import io from "socket.io-client";
-import { SOCKET_URL } from "@/lib/config";
+import { SOCKET_URL, SOCKET_PATH } from "@/lib/config";
 
 type Doctor = {
   id: number;
@@ -325,6 +325,7 @@ export default function DashboardHome() {
 
   useEffect(() => {
     const socket = io(SOCKET_URL, {
+      path: SOCKET_PATH,
       transports: ["websocket"],
     });
 

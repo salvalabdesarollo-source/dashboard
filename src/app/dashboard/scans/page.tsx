@@ -7,7 +7,7 @@ import SearchableSelect from "@/components/SearchableSelect";
 import { apiRequest, extractList, extractPagination } from "@/lib/api";
 import { getStoredAuth } from "@/lib/auth";
 import io from "socket.io-client";
-import { SOCKET_URL } from "@/lib/config";
+import { SOCKET_URL, SOCKET_PATH } from "@/lib/config";
 
 type User = {
   id: number;
@@ -425,6 +425,7 @@ export default function ScansPage() {
   const isEditing = useMemo(() => Boolean(editingScan), [editingScan]);
   useEffect(() => {
     const socket = io(SOCKET_URL, {
+      path: SOCKET_PATH,
       transports: ["websocket"],
     });
 

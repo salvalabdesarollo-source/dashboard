@@ -66,7 +66,15 @@ const toLocalDateTimeParts = (iso: string) => {
 };
 
 const toIsoFromDateTimeParts = (dateValue: string, timeValue: string) => {
-  return new Date(`${dateValue}T${timeValue}:00`).toISOString();
+  const [year, month, day] = dateValue.split("-").map(Number);
+  const [hour, minute] = timeValue.split(":").map(Number);
+  const localDate = new Date(year, month - 1, day, hour, minute, 0);
+  const offset = -localDate.getTimezoneOffset();
+  const offsetHours = Math.floor(Math.abs(offset) / 60);
+  const offsetMinutes = Math.abs(offset) % 60;
+  const offsetSign = offset >= 0 ? "+" : "-";
+  const offsetString = `${offsetSign}${offsetHours.toString().padStart(2, "0")}:${offsetMinutes.toString().padStart(2, "0")}`;
+  return `${dateValue}T${timeValue}:00${offsetString}`;
 };
 
 const buildWorkingTimeOptions = (dateValue: string) => {

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import Modal from "@/components/Modal";
+import SearchableSelect from "@/components/SearchableSelect";
 import { apiRequest, extractList, extractPagination } from "@/lib/api";
 
 type Clinic = {
@@ -44,6 +45,15 @@ export default function DoctorsPage() {
   const [error, setError] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   const isActionBusy = isBusy;
+
+  const clinicOptions = useMemo(
+    () =>
+      clinics.map((clinic) => ({
+        value: clinic.id.toString(),
+        label: clinic.name,
+      })),
+    [clinics],
+  );
 
   const buildQuery = () => {
     const params = new URLSearchParams();
@@ -367,24 +377,19 @@ export default function DoctorsPage() {
 
           <label className="block text-sm font-medium text-slate-700">
             Clínica
-            <select
-              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:border-sky-400 focus:outline-none"
+            <SearchableSelect
+              options={clinicOptions}
               value={formState.clinicId}
-              onChange={(event) =>
+              onChange={(value) =>
                 setFormState((prev) => ({
                   ...prev,
-                  clinicId: event.target.value,
+                  clinicId: value,
                 }))
               }
+              placeholder="Selecciona una clínica"
               required
-            >
-              <option value="">Selecciona una clínica</option>
-              {clinics.map((clinic) => (
-                <option key={clinic.id} value={clinic.id}>
-                  {clinic.name}
-                </option>
-              ))}
-            </select>
+              disabled={isActionBusy}
+            />
           </label>
 
           <div className="flex flex-col gap-2">

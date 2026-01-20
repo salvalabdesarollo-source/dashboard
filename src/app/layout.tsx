@@ -18,6 +18,14 @@ export const metadata: Metadata = {
   description: "Laboratorio dental Salva",
   icons: {
     icon: "/favicon.png",
+    apple: "/favicon.png",
+  },
+  manifest: "/manifest.json",
+  themeColor: "#0ea5e9",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "SalvaLab",
   },
 };
 

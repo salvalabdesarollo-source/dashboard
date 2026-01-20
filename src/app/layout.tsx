@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   description: "Laboratorio dental Salva",
   icons: {
     icon: [
-      { url: "/favicon.png", sizes: "any" },
+      { url: "/favicon.png", type: "image/png" },
       { url: "/favicon.png", sizes: "192x192", type: "image/png" },
       { url: "/favicon.png", sizes: "512x512", type: "image/png" },
     ],
@@ -32,6 +32,9 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "default",
     title: "SalvaLab",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
   },
 };
 

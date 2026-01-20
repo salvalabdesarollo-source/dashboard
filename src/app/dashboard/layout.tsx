@@ -1,9 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { clearStoredAuth, getStoredAuth, type AuthUser } from "@/lib/auth";
+import { RefreshProvider, useRefresh } from "@/contexts/RefreshContext";
 
 const navigationItems = [
   { label: "Agenda", href: "/dashboard" },
@@ -13,14 +15,12 @@ const navigationItems = [
   { label: "Escaneos", href: "/dashboard/scans" },
 ];
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function DashboardContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
+  const { refresh } = useRefresh();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     const stored = getStoredAuth();
@@ -53,15 +53,29 @@ export default function DashboardLayout({
     return user?.role ?? "";
   }, [user?.role]);
 
+  const onRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refresh();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="min-h-screen md:grid md:grid-cols-[260px_1fr]">
         <aside className="hidden h-screen flex-col border-r border-slate-200 bg-white px-6 py-8 md:sticky md:top-0 md:flex">
-          <div className="mb-10 space-y-1">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-              Laboratorio dental Salva
-            </p>
-            <h1 className="text-xl font-semibold text-slate-900">
+          <div className="mb-10">
+            <Image
+              src="/logo-full.png"
+              alt="Laboratorio dental Salva"
+              width={200}
+              height={70}
+              className="h-auto w-full"
+              priority
+            />
+            <h1 className="mt-4 text-xl font-semibold text-slate-900">
               Panel principal
             </h1>
           </div>
@@ -101,16 +115,21 @@ export default function DashboardLayout({
         <main className="flex min-h-screen flex-col">
           <header className="flex flex-col gap-4 border-b border-slate-200 bg-white px-4 py-4 md:flex-row md:items-center md:justify-between md:px-8 md:py-6">
             <div className="flex items-center justify-between md:hidden">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-                  Laboratorio dental Salva
-                </p>
-                <h2 className="text-lg font-semibold text-slate-900">
+              <div className="flex-1">
+                <Image
+                  src="/logo-full.png"
+                  alt="Laboratorio dental Salva"
+                  width={180}
+                  height={63}
+                  className="h-auto w-auto max-w-[180px]"
+                  priority
+                />
+                <h2 className="mt-2 text-lg font-semibold text-slate-900">
                   {activeLabel ?? "Panel"}
                 </h2>
               </div>
               <button
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600"
+                className="ml-4 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600"
                 onClick={onLogout}
                 type="button"
               >
@@ -118,11 +137,60 @@ export default function DashboardLayout({
               </button>
             </div>
 
-            <div className="hidden md:block">
-              <p className="text-sm text-slate-500">Módulo</p>
-              <h2 className="text-2xl font-semibold text-slate-900">
-                {activeLabel ?? "Panel"}
-              </h2>
+            <div className="hidden flex-1 items-center justify-between md:flex">
+              <div>
+                <p className="text-sm text-slate-500">Módulo</p>
+                <h2 className="text-2xl font-semibold text-slate-900">
+                  {activeLabel ?? "Panel"}
+                </h2>
+              </div>
+              <button
+                onClick={onRefresh}
+                disabled={isRefreshing}
+                className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900 disabled:opacity-50"
+                type="button"
+                title="Actualizar"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 md:hidden">
+              <button
+                onClick={onRefresh}
+                disabled={isRefreshing}
+                className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2 text-slate-600 transition hover:border-slate-300 hover:text-slate-900 disabled:opacity-50"
+                type="button"
+                title="Actualizar"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
+                  />
+                </svg>
+              </button>
             </div>
 
           </header>
@@ -154,5 +222,17 @@ export default function DashboardLayout({
         </main>
       </div>
     </div>
+  );
+}
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <RefreshProvider>
+      <DashboardContent>{children}</DashboardContent>
+    </RefreshProvider>
   );
 }

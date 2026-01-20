@@ -5,6 +5,7 @@ import LoadingOverlay from "@/components/LoadingOverlay";
 import Modal from "@/components/Modal";
 import SearchableSelect from "@/components/SearchableSelect";
 import { apiRequest, extractList, extractPagination } from "@/lib/api";
+import { useRefresh } from "@/contexts/RefreshContext";
 
 type Clinic = {
   id: number;
@@ -84,6 +85,8 @@ export default function DoctorsPage() {
     }
   };
 
+  const { registerRefresh } = useRefresh();
+
   useEffect(() => {
     void loadClinics();
   }, []);
@@ -102,6 +105,13 @@ export default function DoctorsPage() {
     };
     void run();
   }, [page, limit, search, clinicFilter]);
+
+  useEffect(() => {
+    const unregister = registerRefresh(async () => {
+      await Promise.all([loadClinics(), loadDoctors()]);
+    });
+    return unregister;
+  }, [registerRefresh, page, limit, search, clinicFilter]);
 
   const onOpenCreate = () => {
     setEditingDoctor(null);

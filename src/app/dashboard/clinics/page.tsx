@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import Modal from "@/components/Modal";
 import { apiRequest, extractList, extractPagination } from "@/lib/api";
+import { useRefresh } from "@/contexts/RefreshContext";
 
 type Clinic = {
   id: number;
@@ -79,6 +80,8 @@ export default function ClinicsPage() {
     return params.toString();
   };
 
+  const { registerRefresh } = useRefresh();
+
   const loadClinics = async () => {
     setIsBusy(true);
     setError(null);
@@ -101,6 +104,13 @@ export default function ClinicsPage() {
   useEffect(() => {
     void loadClinics();
   }, [page, limit, search]);
+
+  useEffect(() => {
+    const unregister = registerRefresh(async () => {
+      await loadClinics();
+    });
+    return unregister;
+  }, [registerRefresh, page, limit, search]);
 
   const onOpenCreate = () => {
     setEditingClinic(null);

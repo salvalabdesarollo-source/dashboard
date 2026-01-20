@@ -8,6 +8,7 @@ import { apiRequest, extractList } from "@/lib/api";
 import { getStoredAuth } from "@/lib/auth";
 import io from "socket.io-client";
 import { SOCKET_URL, SOCKET_PATH } from "@/lib/config";
+import { useRefresh } from "@/contexts/RefreshContext";
 
 type Doctor = {
   id: number;
@@ -152,6 +153,8 @@ export default function DashboardHome() {
     setAssignedUsers(extractList<{ id: number; username: string }>(payload));
   };
 
+  const { registerRefresh } = useRefresh();
+
   useEffect(() => {
     void loadDoctors();
     void loadAssignedUsers();
@@ -160,6 +163,17 @@ export default function DashboardHome() {
   useEffect(() => {
     void loadScans(selectedDate);
   }, [selectedDate]);
+
+  useEffect(() => {
+    const unregister = registerRefresh(async () => {
+      await Promise.all([
+        loadDoctors(),
+        loadAssignedUsers(),
+        loadScans(selectedDate),
+      ]);
+    });
+    return unregister;
+  }, [registerRefresh, selectedDate]);
 
   const slotsByTime = useMemo(() => {
     const map = new Map<string, Scan[]>();

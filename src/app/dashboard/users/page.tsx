@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import Modal from "@/components/Modal";
 import { apiRequest, extractList, extractPagination } from "@/lib/api";
+import { useRefresh } from "@/contexts/RefreshContext";
 
 type User = {
   id: number;
@@ -74,9 +75,18 @@ export default function UsersPage() {
     }
   };
 
+  const { registerRefresh } = useRefresh();
+
   useEffect(() => {
     void loadUsers();
   }, [page, limit, search, roleFilter]);
+
+  useEffect(() => {
+    const unregister = registerRefresh(async () => {
+      await loadUsers();
+    });
+    return unregister;
+  }, [registerRefresh, page, limit, search, roleFilter]);
 
   const onOpenCreate = () => {
     setEditingUser(null);

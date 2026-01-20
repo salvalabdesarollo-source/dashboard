@@ -8,6 +8,7 @@ import { apiRequest, extractList, extractPagination } from "@/lib/api";
 import { getStoredAuth } from "@/lib/auth";
 import io from "socket.io-client";
 import { SOCKET_URL, SOCKET_PATH } from "@/lib/config";
+import { useRefresh } from "@/contexts/RefreshContext";
 
 type User = {
   id: number;
@@ -63,6 +64,19 @@ const toLocalDateTimeParts = (iso: string) => {
     dateValue: isoLocal.slice(0, 10),
     timeValue: isoLocal.slice(11, 16),
   };
+};
+
+const formatDateTime = (iso: string) => {
+  const date = new Date(iso);
+  const day = date.getDate();
+  const month = date.getMonth() + 1;
+  const year = date.getFullYear();
+  const hour24 = date.getHours();
+  const minute = date.getMinutes();
+  const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+  const formattedHour = hour12.toString().padStart(2, "0");
+  const formattedMinute = minute.toString().padStart(2, "0");
+  return `${day}/${month}/${year}, ${formattedHour}:${formattedMinute}`;
 };
 
 const toIsoFromDateTimeParts = (dateValue: string, timeValue: string) => {
@@ -204,6 +218,8 @@ export default function ScansPage() {
     }
   };
 
+  const { registerRefresh } = useRefresh();
+
   useEffect(() => {
     void loadUsers();
     void loadDoctors();
@@ -234,6 +250,18 @@ export default function ScansPage() {
     scannedFilter,
     statusFilter,
   ]);
+
+  useEffect(() => {
+    const unregister = registerRefresh(async () => {
+      await Promise.all([
+        loadUsers(),
+        loadDoctors(),
+        loadClinics(),
+        loadScans(),
+      ]);
+    });
+    return unregister;
+  }, [registerRefresh, page, limit, creatorFilter, assigneeFilter, doctorFilter, clinicFilter, dateFilter, scannedFilter, statusFilter]);
 
   const onOpenCreate = () => {
     setEditingScan(null);
@@ -693,9 +721,7 @@ export default function ScansPage() {
             >
               <div className="space-y-1 text-sm">
                 <p className="font-semibold text-slate-900">
-                  {scan.dateTime
-                    ? new Date(scan.dateTime).toLocaleString("es-ES")
-                    : "-"}
+                  {scan.dateTime ? formatDateTime(scan.dateTime) : "-"}
                 </p>
                 {scan.detail && (
                   <p className="text-xs text-slate-600">{scan.detail}</p>
@@ -769,9 +795,7 @@ export default function ScansPage() {
               {scans.map((scan) => (
                 <tr key={scan.id} className="border-b border-slate-100">
                   <td className="py-3 font-medium text-slate-900">
-                    {scan.dateTime
-                      ? new Date(scan.dateTime).toLocaleString("es-ES")
-                      : "-"}
+                    {scan.dateTime ? formatDateTime(scan.dateTime) : "-"}
                   </td>
                   <td className="text-slate-600">{scan.detail ?? "-"}</td>
                   <td className="text-slate-600">

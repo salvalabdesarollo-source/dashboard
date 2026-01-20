@@ -387,7 +387,6 @@ export default function DoctorsPage() {
                 }))
               }
               placeholder="Selecciona una clínica"
-              required
               disabled={isActionBusy}
             />
           </label>

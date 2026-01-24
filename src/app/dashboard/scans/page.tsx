@@ -427,6 +427,22 @@ export default function ScansPage() {
     }
   };
 
+  const onMarkScanned = async (scan: Scan) => {
+    if (scan.isScanned || scan.status === "cancelled") return;
+    setIsBusy(true);
+    setError(null);
+    try {
+      await apiRequest(`/scans/${scan.id}/mark-scanned`, {
+        method: "PATCH",
+      });
+      await loadScans();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo marcar como escaneado.");
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
   const onUpdateStatus = async (nextStatus: "confirmed" | "cancelled") => {
     if (!editingScan) return;
     if (nextStatus === "cancelled" && editingScan.isScanned) {
@@ -756,16 +772,28 @@ export default function ScansPage() {
                     {scan.isScanned && " - Escaneado"}
                   </span>
                 </div>
-                {isAdmin && !scan.isScanned && scan.status !== "cancelled" && (
+                {isAdmin && scan.status !== "cancelled" && (
                   <div className="mt-3 flex gap-2">
-                    <button
-                      className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
-                      onClick={() => onEdit(scan)}
-                      type="button"
-                      disabled={isActionBusy}
-                    >
-                      Editar
-                    </button>
+                    {!scan.isScanned && (
+                      <button
+                        className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
+                        onClick={() => onEdit(scan)}
+                        type="button"
+                        disabled={isActionBusy}
+                      >
+                        Editar
+                      </button>
+                    )}
+                    {!scan.isScanned && (
+                      <button
+                        className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 hover:border-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
+                        onClick={() => onMarkScanned(scan)}
+                        type="button"
+                        disabled={isActionBusy}
+                      >
+                        Marcar como escaneado
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -831,16 +859,28 @@ export default function ScansPage() {
                     </div>
                   </td>
                   <td className="py-3 text-right">
-                    {isAdmin && !scan.isScanned && scan.status !== "cancelled" && (
+                    {isAdmin && scan.status !== "cancelled" && (
                       <div className="flex justify-end gap-2">
-                        <button
-                          className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
-                          onClick={() => onEdit(scan)}
-                          type="button"
-                          disabled={isActionBusy}
-                        >
-                          Editar
-                        </button>
+                        {!scan.isScanned && (
+                          <button
+                            className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
+                            onClick={() => onEdit(scan)}
+                            type="button"
+                            disabled={isActionBusy}
+                          >
+                            Editar
+                          </button>
+                        )}
+                        {!scan.isScanned && (
+                          <button
+                            className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 hover:border-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
+                            onClick={() => onMarkScanned(scan)}
+                            type="button"
+                            disabled={isActionBusy}
+                          >
+                            Marcar como escaneado
+                          </button>
+                        )}
                       </div>
                     )}
                   </td>

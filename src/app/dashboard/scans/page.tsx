@@ -131,7 +131,9 @@ export default function ScansPage() {
     () =>
       doctors.map((doctor) => ({
         value: doctor.id.toString(),
-        label: doctor.name,
+        label: doctor.clinic?.name
+          ? `${doctor.name} (${doctor.clinic.name})`
+          : doctor.name,
       })),
     [doctors],
   );
@@ -696,7 +698,9 @@ export default function ScansPage() {
             <option value="">Todos los doctores</option>
             {doctors.map((doctor) => (
               <option key={doctor.id} value={doctor.id}>
-                {doctor.name}
+                {doctor.clinic?.name
+                  ? `${doctor.name} (${doctor.clinic.name})`
+                  : doctor.name}
               </option>
             ))}
           </select>
@@ -1264,7 +1268,9 @@ export default function ScansPage() {
               <option value="">Todos los doctores</option>
               {doctors.map((doctor) => (
                 <option key={doctor.id} value={doctor.id}>
-                  {doctor.name}
+                  {doctor.clinic?.name
+                    ? `${doctor.name} (${doctor.clinic.name})`
+                    : doctor.name}
                 </option>
               ))}
             </select>

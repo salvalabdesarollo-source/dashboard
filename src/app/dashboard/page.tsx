@@ -108,7 +108,9 @@ export default function DashboardHome() {
     () =>
       doctors.map((doctor) => ({
         value: doctor.id.toString(),
-        label: doctor.name,
+        label: doctor.clinic?.name
+          ? `${doctor.name} (${doctor.clinic.name})`
+          : doctor.name,
       })),
     [doctors],
   );

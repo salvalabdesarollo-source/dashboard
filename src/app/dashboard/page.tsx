@@ -48,9 +48,8 @@ const buildWorkingSlots = (dateValue: string) => {
   const date = new Date(`${dateValue}T00:00:00`);
   const day = date.getDay();
   if (day === 0) return [];
-  const isSaturday = day === 6;
   const startMinutes = 8 * 60;
-  const endMinutes = isSaturday ? 13 * 60 + 30 : 19 * 60 + 30;
+  const endMinutes = 17 * 60;
   const totalSlots = Math.floor((endMinutes - startMinutes) / 30) + 1;
   return Array.from({ length: totalSlots }, (_, index) => {
     const totalMinutes = startMinutes + index * 30;
@@ -452,22 +451,26 @@ export default function DashboardHome() {
                   <div className="flex items-start py-3 text-xs text-slate-400">
                     <span>{slot.label}</span>
                   </div>
-                  <button
-                    type="button"
+                  <div
+                    role="button"
+                    tabIndex={0}
                     onClick={() => {
-                      if (slotScans.length === 0) {
-                        onOpenCreate(slot.value);
+                      if (!isActionBusy && isAdmin) onOpenCreate(slot.value);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        if (!isActionBusy && isAdmin) onOpenCreate(slot.value);
                       }
                     }}
-                    disabled={isActionBusy}
-                    className={`flex min-h-16 w-full items-start rounded-2xl border px-4 py-3 text-left transition md:h-16 md:items-center ${
+                    className={`flex min-h-16 w-full cursor-pointer items-start rounded-2xl border px-4 py-3 text-left transition md:min-h-16 ${
                       slotScans.length
-                        ? "border-sky-200 bg-sky-50"
+                        ? "border-sky-200 bg-sky-50 hover:border-sky-300"
                         : "border-dashed border-slate-200 hover:border-slate-300"
                     }`}
                   >
                     {slotScans.length ? (
-                      <div className="space-y-1 text-sm">
+                      <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                         {slotScans.map((scan) => {
                           const assignedName = scan.assignedTo?.username ?? null;
                           const canManage =
@@ -488,7 +491,26 @@ export default function DashboardHome() {
                           return (
                             <div
                               key={scan.id}
-                              className="relative flex items-start justify-between gap-3"
+                              role="button"
+                              tabIndex={0}
+                              onClick={(e) => {
+                                if (canManage) {
+                                  e.stopPropagation();
+                                  onOpenManage(scan);
+                                }
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  if (canManage) {
+                                    e.stopPropagation();
+                                    onOpenManage(scan);
+                                  }
+                                }
+                              }}
+                              className={`relative flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 text-left transition hover:border-slate-300 ${
+                                canManage ? "cursor-pointer" : ""
+                              }`}
                             >
                               <div className="flex-1">
                                 <div className="font-semibold text-slate-800">
@@ -499,7 +521,7 @@ export default function DashboardHome() {
                                 </div>
                                 <div className="flex items-center gap-2 text-xs text-slate-500">
                                   <span
-                                    className={`h-2 w-2 rounded-full ${statusColor}`}
+                                    className={`h-2 w-2 shrink-0 rounded-full ${statusColor}`}
                                   />
                                   <span>{statusText}</span>
                                 </div>
@@ -509,7 +531,7 @@ export default function DashboardHome() {
                                   </div>
                                 )}
                               </div>
-                              <div className="flex flex-col items-end gap-2">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
                                 <div className="flex items-center gap-1 text-xs text-slate-500">
                                   <span
                                     className={`h-2 w-2 rounded-full ${
@@ -523,32 +545,32 @@ export default function DashboardHome() {
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                {!assignedName && (
-                                  <button
-                                    type="button"
-                                    className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      void onAssignToMe(scan);
-                                    }}
-                                    disabled={isActionBusy}
-                                  >
-                                    Tomar
-                                  </button>
-                                )}
-                                {assignedName && canManage && (
-                                  <button
-                                    type="button"
-                                    className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      onOpenManage(scan);
-                                    }}
-                                    disabled={isActionBusy}
-                                  >
-                                    Gestionar
-                                  </button>
-                                )}
+                                  {!assignedName && (
+                                    <button
+                                      type="button"
+                                      className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        void onAssignToMe(scan);
+                                      }}
+                                      disabled={isActionBusy}
+                                    >
+                                      Tomar
+                                    </button>
+                                  )}
+                                  {assignedName && canManage && (
+                                    <button
+                                      type="button"
+                                      className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        onOpenManage(scan);
+                                      }}
+                                      disabled={isActionBusy}
+                                    >
+                                      Gestionar
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -557,10 +579,10 @@ export default function DashboardHome() {
                       </div>
                     ) : (
                       <span className="text-xs text-slate-400">
-                        Espacio disponible
+                        Espacio disponible — clic para nuevo escaneo
                       </span>
                     )}
-                  </button>
+                  </div>
                 </div>
               );
             })}

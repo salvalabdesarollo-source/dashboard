@@ -88,9 +88,8 @@ const buildWorkingTimeOptions = (dateValue: string) => {
   const date = new Date(`${dateValue}T00:00:00`);
   const day = date.getDay();
   if (day === 0) return [];
-  const isSaturday = day === 6;
   const startMinutes = 8 * 60;
-  const endMinutes = isSaturday ? 13 * 60 + 30 : 19 * 60 + 30;
+  const endMinutes = 17 * 60;
   const totalSlots = Math.floor((endMinutes - startMinutes) / 30) + 1;
   return Array.from({ length: totalSlots }, (_, index) => {
     const totalMinutes = startMinutes + index * 30;
@@ -117,9 +116,6 @@ export default function ScansPage() {
   const [showForm, setShowForm] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [occupiedSlots, setOccupiedSlots] = useState<string[]>([]);
-  const [occupiedError, setOccupiedError] = useState<string | null>(null);
-  const [isSlotsLoading, setIsSlotsLoading] = useState(false);
   const [creatorFilter, setCreatorFilter] = useState("");
   const [assigneeFilter, setAssigneeFilter] = useState("");
   const [doctorFilter, setDoctorFilter] = useState("");
@@ -274,9 +270,6 @@ export default function ScansPage() {
     }));
     setShowForm(true);
     setShowTimePicker(false);
-    setOccupiedSlots([]);
-    setOccupiedError(null);
-    setIsSlotsLoading(false);
   };
 
   const onEdit = (scan: Scan) => {
@@ -295,8 +288,6 @@ export default function ScansPage() {
     });
     setShowForm(true);
     setShowTimePicker(false);
-    setOccupiedError(null);
-    setIsSlotsLoading(false);
   };
 
   const onCancel = () => {
@@ -305,63 +296,7 @@ export default function ScansPage() {
     setShowForm(false);
     setShowTimePicker(false);
     setShowFilters(false);
-    setOccupiedSlots([]);
-    setOccupiedError(null);
-    setIsSlotsLoading(false);
   };
-
-  const mapUtcSlotsToLocal = (slots: string[], dateValue: string) => {
-    const [year, month, day] = dateValue.split("-").map(Number);
-    return slots
-      .map((slot) => {
-        const [hour, minute] = slot.split(":").map(Number);
-        const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
-        const localHour = utcDate.getHours().toString().padStart(2, "0");
-        const localMinute = utcDate.getMinutes().toString().padStart(2, "0");
-        return `${localHour}:${localMinute}`;
-      })
-      .filter((slot) => slot.length === 5);
-  };
-
-  const fetchOccupiedSlots = async () => {
-    if (!formState.dateValue) {
-      setOccupiedSlots([]);
-      setOccupiedError(null);
-      return;
-    }
-    setOccupiedError(null);
-    setIsSlotsLoading(true);
-    try {
-      const params = new URLSearchParams({ date: formState.dateValue });
-      if (editingScan?.id) {
-        params.set("excludeScanId", editingScan.id.toString());
-      }
-      const payload = await apiRequest<string[]>(
-        `/scans/occupied-slots?${params.toString()}`,
-      );
-      const mapped = mapUtcSlotsToLocal(payload, formState.dateValue);
-      setOccupiedSlots(mapped);
-    } catch (err) {
-      setOccupiedError(
-        err instanceof Error
-          ? err.message
-          : "No se pudieron cargar horarios ocupados.",
-      );
-      setOccupiedSlots([]);
-    } finally {
-      setIsSlotsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void fetchOccupiedSlots();
-  }, [formState.dateValue, editingScan?.id]);
-
-  useEffect(() => {
-    if (formState.timeValue && occupiedSlots.includes(formState.timeValue)) {
-      setFormState((prev) => ({ ...prev, timeValue: "" }));
-    }
-  }, [occupiedSlots, formState.timeValue]);
 
   useEffect(() => {
     if (!formState.timeValue) return;
@@ -951,7 +886,6 @@ export default function ScansPage() {
                   }));
                   if (nextValue) {
                     setShowTimePicker(true);
-                    void fetchOccupiedSlots();
                   }
                 }}
                 required
@@ -964,10 +898,7 @@ export default function ScansPage() {
                 <button
                   type="button"
                   className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
-                  onClick={() => {
-                    setShowTimePicker(true);
-                    void fetchOccupiedSlots();
-                  }}
+                  onClick={() => setShowTimePicker(true)}
                   disabled={!formState.dateValue || isActionBusy}
                 >
                   {formState.timeValue ? "Cambiar hora" : "Seleccionar hora"}
@@ -986,9 +917,6 @@ export default function ScansPage() {
                       ? "No hay horarios disponibles para este día."
                       : "Aún no has elegido una hora."}
               </p>
-              {occupiedError && (
-                <p className="mt-2 text-xs text-rose-600">{occupiedError}</p>
-              )}
             </div>
           </div>
 
@@ -1009,56 +937,38 @@ export default function ScansPage() {
                   </button>
                 </div>
                 <div className="px-6 py-5">
-                  {isSlotsLoading ? (
-                    <div className="flex flex-col items-center gap-3 py-8 text-slate-600">
-                      <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-sky-500" />
-                      <p className="text-sm">
-                        Cargando disponibilidad...
-                      </p>
-                    </div>
+                  {timeOptions.length === 0 ? (
+                    <p className="text-sm text-slate-500">
+                      No hay horarios disponibles para este día.
+                    </p>
                   ) : (
-                    <>
-                      {timeOptions.length === 0 ? (
-                        <p className="text-sm text-slate-500">
-                          No hay horarios disponibles para este día.
-                        </p>
-                      ) : (
-                        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                          {timeOptions.map((option) => {
-                            const isSelected =
-                              formState.timeValue === option.value;
-                            const isOccupied = occupiedSlots.includes(option.value);
-                            return (
-                              <button
-                                key={option.value}
-                                type="button"
-                                disabled={isOccupied || isActionBusy}
-                                onClick={() => {
-                                  if (isOccupied) return;
-                                  setFormState((prev) => ({
-                                    ...prev,
-                                    timeValue: option.value,
-                                  }));
-                                  setShowTimePicker(false);
-                                }}
-                                className={`rounded-lg border px-2 py-2 text-xs font-semibold transition ${
-                                  isSelected
-                                    ? "border-sky-500 bg-sky-50 text-sky-700"
-                                    : isOccupied
-                                      ? "border-rose-200 bg-rose-50 text-rose-600"
-                                      : "border-slate-200 text-slate-600 hover:border-slate-300"
-                                }`}
-                              >
-                                {option.label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                      <p className="mt-4 text-xs text-slate-500">
-                        Horarios ocupados están deshabilitados.
-                      </p>
-                    </>
+                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                      {timeOptions.map((option) => {
+                        const isSelected =
+                          formState.timeValue === option.value;
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            disabled={isActionBusy}
+                            onClick={() => {
+                              setFormState((prev) => ({
+                                ...prev,
+                                timeValue: option.value,
+                              }));
+                              setShowTimePicker(false);
+                            }}
+                            className={`rounded-lg border px-2 py-2 text-xs font-semibold transition ${
+                              isSelected
+                                ? "border-sky-500 bg-sky-50 text-sky-700"
+                                : "border-slate-200 text-slate-600 hover:border-slate-300"
+                            }`}
+                          >
+                            {option.label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
               </div>

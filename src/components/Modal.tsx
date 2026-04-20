@@ -10,9 +10,11 @@ export default function Modal({ open, title, onClose, children }: ModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 px-4 py-8 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
+      <div className="max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-6">
+          <h3 className="text-base font-semibold text-slate-900 sm:text-lg">
+            {title}
+          </h3>
           <button
             className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600"
             onClick={onClose}
@@ -21,7 +23,7 @@ export default function Modal({ open, title, onClose, children }: ModalProps) {
             Cerrar
           </button>
         </div>
-        <div className="px-6 py-5">{children}</div>
+        <div className="px-4 py-5 sm:px-6">{children}</div>
       </div>
     </div>
   );

@@ -72,6 +72,36 @@ const formatDateLabel = (date: Date) =>
     year: "numeric",
   });
 
+const formatMonthLabel = (date: Date) =>
+  date.toLocaleDateString("es-ES", {
+    month: "long",
+    year: "numeric",
+  });
+
+const weekdayLabels = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"];
+
+const toDateValue = (date: Date) => {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const buildCalendarDays = (monthDate: Date) => {
+  const year = monthDate.getFullYear();
+  const month = monthDate.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const firstWeekday = (firstDay.getDay() + 6) % 7;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const totalCells = Math.ceil((firstWeekday + daysInMonth) / 7) * 7;
+
+  return Array.from({ length: totalCells }, (_, index) => {
+    const dayNumber = index - firstWeekday + 1;
+    if (dayNumber < 1 || dayNumber > daysInMonth) return null;
+    return new Date(year, month, dayNumber);
+  });
+};
+
 const toLocalDate = (iso: string) => {
   const date = new Date(iso);
   const offset = date.getTimezoneOffset();
@@ -192,6 +222,32 @@ export default function DashboardHome() {
     const date = new Date(`${selectedDate}T00:00:00`);
     date.setDate(date.getDate() + deltaDays);
     setSelectedDate(date.toISOString().slice(0, 10));
+  };
+
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [visibleMonth, setVisibleMonth] = useState(() => {
+    const today = new Date();
+    return new Date(today.getFullYear(), today.getMonth(), 1);
+  });
+
+  const onOpenDatePicker = () => {
+    if (isActionBusy) return;
+    const currentDate = new Date(`${selectedDate}T00:00:00`);
+    setVisibleMonth(
+      new Date(currentDate.getFullYear(), currentDate.getMonth(), 1),
+    );
+    setShowDatePicker(true);
+  };
+
+  const onChangeVisibleMonth = (deltaMonths: number) => {
+    setVisibleMonth(
+      (prev) => new Date(prev.getFullYear(), prev.getMonth() + deltaMonths, 1),
+    );
+  };
+
+  const onSelectDate = (date: Date) => {
+    setSelectedDate(toDateValue(date));
+    setShowDatePicker(false);
   };
 
   const onOpenCreate = (slotValue: string) => {
@@ -335,6 +391,15 @@ export default function DashboardHome() {
     () => formatDateLabel(new Date(`${selectedDate}T00:00:00`)),
     [selectedDate],
   );
+  const calendarMonthLabel = useMemo(
+    () => formatMonthLabel(visibleMonth),
+    [visibleMonth],
+  );
+  const calendarDays = useMemo(
+    () => buildCalendarDays(visibleMonth),
+    [visibleMonth],
+  );
+  const todayValue = useMemo(() => toDateValue(new Date()), []);
 
   const selectedDateRef = useRef(selectedDate);
 
@@ -421,12 +486,34 @@ export default function DashboardHome() {
             ◀
           </button>
           <div className="text-center">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-              Agenda
-            </p>
-            <h2 className="text-lg font-semibold text-slate-900">
-              {selectedDateLabel}
-            </h2>
+            <button
+              className="inline-flex flex-col items-center gap-1 rounded-xl px-3 py-2 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              type="button"
+              onClick={onOpenDatePicker}
+              disabled={isActionBusy}
+            >
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                Agenda
+              </p>
+              <span className="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
+                <span>{selectedDateLabel}</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  className="h-5 w-5 text-slate-500"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M8 2v3m8-3v3M3.5 9.5h17M5 4.5h14A1.5 1.5 0 0 1 20.5 6v13A1.5 1.5 0 0 1 19 20.5H5A1.5 1.5 0 0 1 3.5 19V6A1.5 1.5 0 0 1 5 4.5Z"
+                  />
+                </svg>
+              </span>
+            </button>
           </div>
           <button
             className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
@@ -589,6 +676,72 @@ export default function DashboardHome() {
           </div>
         )}
       </div>
+
+      <Modal
+        open={showDatePicker}
+        title="Seleccionar fecha"
+        onClose={() => setShowDatePicker(false)}
+      >
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
+              onClick={() => onChangeVisibleMonth(-1)}
+              disabled={isActionBusy}
+            >
+              ◀
+            </button>
+            <p className="min-w-0 flex-1 text-center text-sm font-semibold capitalize text-slate-900 sm:text-base">
+              {calendarMonthLabel}
+            </p>
+            <button
+              type="button"
+              className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
+              onClick={() => onChangeVisibleMonth(1)}
+              disabled={isActionBusy}
+            >
+              ▶
+            </button>
+          </div>
+
+          <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-400 sm:gap-2 sm:text-xs">
+            {weekdayLabels.map((label) => (
+              <span key={label}>{label}</span>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-7 gap-1 sm:gap-2">
+            {calendarDays.map((day, index) => {
+              if (!day) {
+                return <div key={`empty-${index}`} className="h-9 sm:h-10" />;
+              }
+
+              const dayValue = toDateValue(day);
+              const isSelected = dayValue === selectedDate;
+              const isToday = dayValue === todayValue;
+
+              return (
+                <button
+                  key={dayValue}
+                  type="button"
+                  onClick={() => onSelectDate(day)}
+                  className={`h-9 rounded-xl text-xs font-semibold transition sm:h-10 sm:text-sm ${
+                    isSelected
+                      ? "bg-sky-600 text-white hover:bg-sky-700"
+                      : isToday
+                        ? "border border-sky-200 bg-sky-50 text-sky-700 hover:border-sky-300"
+                        : "border border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                  }`}
+                  disabled={isActionBusy}
+                >
+                  {day.getDate()}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </Modal>
 
       {isAdmin && (
         <Modal

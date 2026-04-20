@@ -13,6 +13,7 @@ const navigationItems = [
   { label: "Clinicas", href: "/dashboard/clinics" },
   { label: "Doctores", href: "/dashboard/doctors" },
   { label: "Escaneos", href: "/dashboard/scans" },
+  { label: "Estadísticas", href: "/dashboard/stats" },
 ];
 
 function DashboardContent({ children }: { children: React.ReactNode }) {

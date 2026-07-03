@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import { apiRequest } from "@/lib/api";
 import { setStoredAuth } from "@/lib/auth";
+import { getFcmTokenForLogin } from "@/lib/fcm";
 
 type LoginResponse = {
   id: number;
@@ -27,9 +28,14 @@ export default function LoginPage() {
     setError(null);
     setIsLoading(true);
     try {
+      const fcmToken = await getFcmTokenForLogin();
       const payload = await apiRequest<LoginResponse>("/users/login", {
         method: "POST",
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({
+          username,
+          password,
+          ...(fcmToken ? { FCM_token: fcmToken } : {}),
+        }),
         skipAuth: true,
       });
       setStoredAuth(payload);

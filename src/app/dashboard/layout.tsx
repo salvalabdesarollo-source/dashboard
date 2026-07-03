@@ -4,8 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { clearStoredAuth, getStoredAuth, type AuthUser } from "@/lib/auth";
+import FcmNotificationsProvider from "@/components/FcmNotificationsProvider";
 import { RefreshProvider, useRefresh } from "@/contexts/RefreshContext";
+import { clearStoredAuth, getStoredAuth, type AuthUser } from "@/lib/auth";
+import { clearFcmTokenOnBackend } from "@/lib/fcm";
 
 const navigationItems = [
   { label: "Agenda", href: "/dashboard" },
@@ -44,6 +46,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   }, [pathname, availableNavigation]);
 
   const onLogout = () => {
+    void clearFcmTokenOnBackend().catch(() => {});
     clearStoredAuth();
     router.replace("/login");
   };
@@ -65,6 +68,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <FcmNotificationsProvider enabled={Boolean(user)} />
       <div className="min-h-screen md:grid md:grid-cols-[260px_1fr]">
         <aside className="hidden h-screen flex-col border-r border-slate-200 bg-white px-6 py-8 md:sticky md:top-0 md:flex">
           <div className="mb-10">

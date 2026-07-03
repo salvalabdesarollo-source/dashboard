@@ -22,9 +22,15 @@ export function getStoredAuth(): AuthUser | null {
 export function setStoredAuth(auth: AuthUser) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(auth));
+  void import("@/lib/notifications/authIndexedDb").then(({ syncAuthTokenToIndexedDb }) =>
+    syncAuthTokenToIndexedDb(auth.token),
+  );
 }
 
 export function clearStoredAuth() {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(STORAGE_KEY);
+  void import("@/lib/notifications/authIndexedDb").then(({ clearAuthFromIndexedDb }) =>
+    clearAuthFromIndexedDb(),
+  );
 }

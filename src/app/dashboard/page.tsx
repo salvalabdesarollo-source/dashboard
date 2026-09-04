@@ -869,7 +869,7 @@ export default function DashboardHome() {
             </button>
             {selectedScan?.assignedTo?.id === currentUserId &&
               !selectedScan?.isScanned &&
-              selectedScan?.status === "confirmed" && (
+              selectedScan?.status !== "cancelled" && (
                 <button
                   type="button"
                   className="w-full rounded-xl bg-sky-600 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"

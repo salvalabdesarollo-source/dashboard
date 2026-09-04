@@ -695,25 +695,28 @@ export default function ScansPage() {
                 <div className="absolute right-3 top-3 flex items-center gap-2 text-xs text-slate-500">
                   <span
                     className={`h-2 w-2 rounded-full ${
-                      scan.status === "confirmed"
+                      scan.isScanned
                         ? "bg-emerald-500"
-                        : scan.status === "cancelled"
-                          ? "bg-rose-500"
-                          : "bg-orange-400"
+                        : scan.status === "confirmed"
+                          ? "bg-emerald-500"
+                          : scan.status === "cancelled"
+                            ? "bg-rose-500"
+                            : "bg-orange-400"
                     }`}
                   />
                   <span>
-                    {scan.status === "confirmed"
-                      ? "Confirmado"
-                      : scan.status === "cancelled"
-                        ? "Cancelado"
-                        : "Sin confirmar"}
-                    {scan.isScanned && " - Escaneado"}
+                    {scan.isScanned
+                      ? "Escaneado"
+                      : scan.status === "confirmed"
+                        ? "Confirmado"
+                        : scan.status === "cancelled"
+                          ? "Cancelado"
+                          : "Sin confirmar"}
                   </span>
                 </div>
-                {isAdmin && scan.status !== "cancelled" && (
+                {scan.status !== "cancelled" && (
                   <div className="mt-3 flex gap-2">
-                    {!scan.isScanned && (
+                    {isAdmin && !scan.isScanned && (
                       <button
                         className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
                         onClick={() => onEdit(scan)}
@@ -780,27 +783,30 @@ export default function ScansPage() {
                     <div className="flex items-center gap-2">
                       <span
                         className={`h-2 w-2 rounded-full ${
-                          scan.status === "confirmed"
+                          scan.isScanned
                             ? "bg-emerald-500"
-                            : scan.status === "cancelled"
-                              ? "bg-rose-500"
-                              : "bg-orange-400"
+                            : scan.status === "confirmed"
+                              ? "bg-emerald-500"
+                              : scan.status === "cancelled"
+                                ? "bg-rose-500"
+                                : "bg-orange-400"
                         }`}
                       />
                       <span>
-                        {scan.status === "confirmed"
-                          ? "Confirmado"
-                          : scan.status === "cancelled"
-                            ? "Cancelado"
-                            : "Sin confirmar"}
-                        {scan.isScanned && " - Escaneado"}
+                        {scan.isScanned
+                          ? "Escaneado"
+                          : scan.status === "confirmed"
+                            ? "Confirmado"
+                            : scan.status === "cancelled"
+                              ? "Cancelado"
+                              : "Sin confirmar"}
                       </span>
                     </div>
                   </td>
                   <td className="py-3 text-right">
-                    {isAdmin && scan.status !== "cancelled" && (
+                    {scan.status !== "cancelled" && (
                       <div className="flex justify-end gap-2">
-                        {!scan.isScanned && (
+                        {isAdmin && !scan.isScanned && (
                           <button
                             className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
                             onClick={() => onEdit(scan)}

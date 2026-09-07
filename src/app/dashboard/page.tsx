@@ -49,7 +49,7 @@ const buildWorkingSlots = (dateValue: string) => {
   const day = date.getDay();
   if (day === 0) return [];
   const startMinutes = 8 * 60;
-  const endMinutes = 17 * 60;
+  const endMinutes = 19 * 60;
   const totalSlots = Math.floor((endMinutes - startMinutes) / 30) + 1;
   return Array.from({ length: totalSlots }, (_, index) => {
     const totalMinutes = startMinutes + index * 30;

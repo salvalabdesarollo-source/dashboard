@@ -10,8 +10,9 @@ type Clinic = {
   id: number;
   name: string;
   address: string;
-  latitude?: number | null;
-  longitude?: number | null;
+  /** TypeORM decimal puede venir como string desde el API */
+  latitude?: number | string | null;
+  longitude?: number | string | null;
 };
 
 type ClinicFormState = {
@@ -120,13 +121,19 @@ export default function ClinicsPage() {
     setShowForm(true);
   };
 
+  const toCoordinate = (value: number | string | null | undefined) => {
+    if (value == null || value === "") return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+
   const onEdit = (clinic: Clinic) => {
     setEditingClinic(clinic);
     setFormState({
       name: clinic.name,
       address: clinic.address,
-      latitude: clinic.latitude ?? null,
-      longitude: clinic.longitude ?? null,
+      latitude: toCoordinate(clinic.latitude),
+      longitude: toCoordinate(clinic.longitude),
     });
     setMapsError(null);
     setMapSearch(clinic.address ?? "");
@@ -149,11 +156,16 @@ export default function ClinicsPage() {
       if (formState.latitude == null || formState.longitude == null) {
         throw new Error("Selecciona la ubicación en el mapa.");
       }
+      const latitude = Number(formState.latitude);
+      const longitude = Number(formState.longitude);
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        throw new Error("La ubicación seleccionada no es válida.");
+      }
       const payload = {
         name: formState.name,
         address: formState.address,
-        latitude: formState.latitude,
-        longitude: formState.longitude,
+        latitude,
+        longitude,
       };
 
       if (editingClinic) {
